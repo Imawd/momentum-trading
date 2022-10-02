@@ -1,6 +1,6 @@
 # Momentum Trading Programs
 
-  This is a work in progresss project where I learn various quant concepts and try to implement them in programs.
+  This is part of a work in progresss project where I learn various quant concepts and try to implement them in programs.
   
   These are programs I made with the help of FreeCodeCamp.org. They aren't meant for actual trading (obviously) and likely won't net an average return greater than the market average (if even that). This was just a test for me to learn the logistics of calling APIs specifically for stocks as well as working with dataframes and exporting to excel. I plan to link these to mock stock trading portfolios just to see how they perform as an experiement later down the line. 
 
