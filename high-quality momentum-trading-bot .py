@@ -4,8 +4,10 @@ import requests
 import xlsxwriter 
 import math 
 from scipy import stats
+import yfinance as yf
+import pandas_ta as ta
 
-
+from API import get IEX_CLOUD_API_TOKEN
 #in this bot, we are going to implement a more robust trading strategy whereby
 #the bot uses more indicators and calculates a score to determine the quality of
 #the momentum stock in question
@@ -14,30 +16,55 @@ from scipy import stats
 #outperformance over the longterm whilst low quality stocks are ones that 
 #have had a recent short burst in stock price 
 
+#smoothed moving average calculator to get RSI
+def smma(series,n):
+    
+    output=[series[0]]
+    
+    for i in range(1,len(series)):
+        temp=output[-1]*(n-1)+series[i]
+        output.append(temp/n)
+        
+    return output
 
-stocks = pd.read_csv('sp500_stocks.csv')
-# testing if program is importing stocks properly and API calls are working
+def getRSI(df, period = 14):
+    """ Returns a pd.Series with the relative strength index. """
+    #calculate delta which is the difference between close prices
+    close_delta = df['close'].diff()
 
-# print(stocks)
+    # Make two series: one for lower closes and one for higher closes
+    up = close_delta.clip(lower=0)
+    down = -1 * close_delta.clip(upper=0)
+    
+    #up=np.where(delta>0,delta,0)
+    #down=np.where(delta<0,-delta,0)
+    #is also valid
 
-#symbol = "IBM"
-#api_url = f'https://sandbox.iexapis.com/stable/stock/{symbol}/stats?token={API_KEY}'
-#data = requests.get(api_url).json()
 
-#Function to split list into n-sized chunks sourced from
+    # Use smoothed moving average that we calculated
+    ma_up = smma(up, period)
+    ma_down = smma(down, period)
+
+    #relative strength calculation    
+    rs = ma_up / ma_down
+    rsi = 100 - (100/(1 + rs))
+    return rsi
+
+tickers = pd.read_csv('sp500_stocks.csv')
+
+#Function to split list into n-sized chunks 
 #https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-symbol_groups = list(chunks(stocks['Ticker'], 100))
+symbol_groups = list(chunks(tickers['Ticker'], 100))
 symbol_strings = []
 for i in range(0, len(symbol_groups)):
     symbol_strings.append(','.join(symbol_groups[i]))
 #     print(symbol_strings[i])
 
-#note that the number of columns this time has tripled
 my_columns = ['Ticker', 
             'Price', 
             'Number of Shares to Buy', 
@@ -49,6 +76,7 @@ my_columns = ['Ticker',
             'Three-Month Return Percentile',
             'One-Month Price Return',
             'One-Month Return Percentile',
+            'RSI',
             'HQM Score'
             ]
 
